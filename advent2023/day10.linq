@@ -148,15 +148,6 @@ let main() =
             
     traverse path
     
-    let flat2Darray array2D = 
-        seq { for x in [0..(Array2D.length1 array2D) - 1] do 
-                  for y in [0..(Array2D.length2 array2D) - 1] do 
-                      yield array2D.[x, y] }
-                              
-    // markedTiles |> Array2D.map (fun m -> match m with | Unknown -> '.' | Loop -> '*' | Inner -> 'O') |> Dump |> ignore
-    // tiles |> Array2D.map (fun t -> match t with | '.' -> '*' | _ -> t) |> Dump |> ignore
-    
-    markedTiles |> flat2Darray |> Seq.filter (fun x -> x = Inner) |> Seq.length |> Dump |> ignore
-    
+    markedTiles |> Seq.cast |> Seq.filter (fun x -> x = Inner) |> Seq.length |> Dump |> ignore
     
 main()
