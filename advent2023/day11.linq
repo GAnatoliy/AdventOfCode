@@ -16,7 +16,7 @@ let main () =
                    |> Seq.filter (fun (_, _, c) -> c = '#') |> Seq.map (fun (i, j, _) -> (i, j)) |> List.ofSeq
                    
     let expandCount (expandFactor:int64) (map:bool list) (x1:int) (x2:int) = 
-        let expand = map[Math.Min(x1, x2)..Math.Max(x1, x2)] |> List.filter(fun x -> x) |> List.length 
+        let expand = map[Math.Min(x1, x2)..Math.Max(x1, x2)] |> List.filter id |> List.length 
         int64 (expand) * (expandFactor - 1L)
         
     let calcDistance (expandFactor:int64) (i1:int, j1:int) (i2, j2) = 
