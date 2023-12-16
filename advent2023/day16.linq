@@ -29,40 +29,28 @@ let nextTiles (grid: char array2d) (i, j, dir) =
     | W, '\\' -> [(i - 1, j, N)]
     | _ -> failwith "Error" 
     
-let inline charToInt c = int c - int '0'
-let draw (grid: char array2d) tile = 
-    let (i, j, dir) = tile 
-    grid[i, j] <- 
-        match grid[i, j] with 
-        | '^' | '>' | 'v' | '<' -> 2 |> Convert.ToChar
-        | c -> if c |> Char.IsDigit then (c |> string |> int) + 1 |> Convert.ToChar else match dir with | N -> '^' | E -> '>' | S -> 'v' | W -> '<'
-    
 let isOutOfGrid (grid: char array2d) (i, j, _) = i < 0 || i >= (grid |> Array2D.length1) || j < 0 || j >= (grid |> Array2D.length2)
-let isAlreadyPassed path tile = path |> List.exists (fun x -> x = tile)  
+let isAlreadyPassed path tile = path |> Set.contains tile
     
 let rec runBeam (grid: char array2d) path tiles  = 
     match tiles with 
     | [] -> path
     | x::xs -> 
-        runBeam grid (x::path) <|
+        runBeam grid (path |> Set.add x) <|
             match nextTiles grid x |> List.filter (isOutOfGrid grid >> not) |> List.filter (isAlreadyPassed path >> not) with 
             | [] -> xs
             | [t] -> t::xs 
             | t1::t2::_ -> t1::t2::xs 
     
+let getInitTiles (grid: _ array2d) = 
+    let (iL, jL) = grid |> Array2D.length1, grid |> Array2D.length2
+    [for j in 0..(jL - 1) do [(0, j, S); (iL - 1, j, N)]] @ [for i in 0..(iL - 1) do [(i, 0, E); (i, jL - 1, W)]] |> List.collect id
     
 let main() =
     let input = 16 |> Utils.Core.readInputLines (Path.GetDirectoryName(Util.CurrentQueryPath)) 
-    let grid = input |> List.map Seq.toList |> array2D |> Dump
+    let grid = input |> List.map Seq.toList |> array2D 
     
-    let path = runBeam grid [] [(0, 0, E)] 
-    path |> List.iter (draw grid) 
-    grid |> Dump
-    
-    path |> List.map (fun (i, j, _) -> (i, j)) |> List.distinct |> List.length |> Dump |> ignore
-    
-    
-    
-    
+    runBeam grid Set.empty [(0, 0, E)] |> Set.map (fun (i, j, _) -> (i, j)) |> Set.count |> Dump |> ignore
+    getInitTiles grid |> List.map (fun t -> runBeam grid Set.empty [t] |> Set.map (fun (i, j, _) -> (i, j)) |> Set.count) |> List.max |> Dump |> ignore
     
 main()
