@@ -38,6 +38,7 @@ let main() =
     let boxes = Array.create 256 []
     steps.Split(',') |> Seq.iter (deserialize >> processLense boxes) 
     
-    boxes |> Array.mapi (fun i box -> box |> List.mapi (fun i' (_, f) -> (1 + i) * (1 + i') * f)) |> List.ofArray |> List.collect id |> List.sum |> Dump |> ignore
+    boxes |> Array.mapi (fun i box -> box |> List.mapi (fun i' (_, f) -> (1 + i) * (1 + i') * f)) 
+        |> List.ofArray |> List.collect id |> List.sum |> Dump |> ignore
     
 main()
