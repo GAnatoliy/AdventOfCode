@@ -14,9 +14,6 @@ type Step = {
     Action: Action
 }
 
-type Part = Map<char, int> 
-
-
 let parse (rows: string list) = 
     let mapAction a = match a with | "A" -> Accept | "R" -> Reject | _ -> a |> Redirect 
     let mapRule (r: string) = 
