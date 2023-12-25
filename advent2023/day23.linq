@@ -45,48 +45,32 @@ let buildGraph grid isSlopePasseble =
     crossroads |> List.iter (fun t -> findConnections grid t isSlopePasseble |> List.iter (fun (t', length) -> addEdge graph t t' length))
     graph
     
-let mutable finalPath = []
-let rec findMaxPathLength (graph: Dictionary<_, _>) (v, (l: int)) endV path = 
-    let vertexes = graph[v] |> List.filter (fun (v', _) -> path |> List.exists (fun (v'', _) -> v' = v'') |> not) 
-    match v = endV, vertexes with 
-    | true, _ -> 
-        let length = l + (path |> List.map (fun (_, l) -> l) |> List.sum)
-        let finalPathLength = (finalPath |> List.map (fun (_, l) -> l) |> List.sum)
-        if length > finalPathLength then 
-            finalPath <- (v,l)::path
-        //(path,  path |> List.map (fun (_, l) -> l) |> List.sum) |> Dump |> ignore
-        length 
-    | false, [] -> 0
-    | false, vs -> vs |> List.map (fun v' -> findMaxPathLength graph v' endV ((v, l)::path)) |> List.max   
+let rec findMaxPathLengthRec (graph: Dictionary<_, _>) (visitedVertexes: Dictionary<_, _>) (v, (l: int)) endV pathLength = 
+    visitedVertexes[v] <- true
+    let vertexes = graph[v] |> List.filter (fun (v', _) -> visitedVertexes[v'] |> not) 
+    let rez = 
+        match v = endV, vertexes with 
+        | true, _ -> l + pathLength
+        | false, [] -> 0
+        | false, vs -> vs |> List.map (fun v' -> findMaxPathLengthRec graph visitedVertexes v' endV (l + pathLength)) |> List.max   
+    visitedVertexes[v] <- false
+    rez
     
-let createFile path (content: string) =     
-    use file = File.Create(path)
-    let bytes = System.Text.Encoding.UTF8.GetBytes(content)
-    do file.Write (bytes)
-    
-let displayGraph (graph: Dictionary<_, _>) = 
-    let isInFinalPath v1 v2 = finalPath |> List.rev |> List.map (fun (v, _) -> v) |> List.windowed 2 |> List.exists (fun edge -> edge = [v1; v2])
-    let getColor v1 v2 = if isInFinalPath v1 v2 then "red" else "black"
-    let vertexes = graph.Keys |> List.ofSeq |> List.map (fun v -> $"\"{v}\";")
-    let edges = graph.Keys |> List.ofSeq |> List.map (fun v1 -> graph[v1] |> List.map (fun (v2, l) -> $"\"{v1}\" -> \"{v2}\" [label=\"{l}\", color={getColor v1 v2}];")) |> List.collect id
-    let content = String.Join(Environment.NewLine, "digraph G {"::vertexes @ edges @ ["}"])
-    createFile "c://Temp//gr.dot" content 
+let findMaxPathLength (graph: Dictionary<_, _>) startV endV = 
+    findMaxPathLengthRec graph (graph.Keys |> List.ofSeq |> List.map (fun k -> (k, false)) |> dict |> Dictionary) (startV, 0) endV 0
     
 let main() = 
     let input = 23 |> Utils.Core.readInputLines (Path.GetDirectoryName(Util.CurrentQueryPath)) 
-    let grid = input |> List.map List.ofSeq |> array2D  |> Dump
+    let grid = input |> List.map List.ofSeq |> array2D
     
     let start = 0, grid[0,0..] |> Array.findIndex (fun c -> c = '.')
     let endRow = (grid |> Array2D.length1) - 1
     let endTile = endRow, grid[endRow,0..] |> Array.findIndex (fun c -> c = '.') 
     
-    let graph = buildGraph grid false  |> Dump
-    findMaxPathLength graph (start, 0) endTile [] |> Dump |> ignore
+    let graph = buildGraph grid false 
+    findMaxPathLength graph start endTile |> Dump |> ignore
     
-    let graph = buildGraph grid true  |> Dump
-    findMaxPathLength graph (start, 0) endTile [] |> Dump |> ignore
-    
-    //displayGraph graph 
-    //finalPath |> Dump
+    let graph = buildGraph grid true 
+    findMaxPathLength graph start endTile |> Dump |> ignore
     
 main()
